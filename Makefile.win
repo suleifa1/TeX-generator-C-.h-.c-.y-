@@ -1,0 +1,41 @@
+.PHONY: ccdoc clean clean-docs clean-all
+
+APP = ccdoc.exe
+
+CC = cl
+OPTS = /EHsc /Zi /Za
+
+
+LEXERSRC = lex.yy.c
+PARSESRC = y.tab.c
+PARSESRCH = y.tab.h
+GEN_SRC = $(PARSESRC) $(PARSESRCH) $(LEXERSRC)
+
+DOC_DIR = docs
+SRC = parserfuncs.c list.c func_param.c text.c $(filter %.c, $(GEN_SRC))
+OBJ = $(SRC:.c=.obj)
+
+$(APP): $(OBJ)
+	$(CC) $(OPTS) /Fe$@ $**
+
+%.obj: %.c
+	$(CC) $(OPTS) /c $< /Fo$@
+
+$(LEXERSRC): scaner.l
+	flex -o $(LEXERSRC) scaner.l
+
+
+$(PARSESRC) $(PARSESRCH): parser.y
+	bison --debug --verbose -y -d -o $(PARSESRC) parser.y
+
+
+ccdoc:  $(APP) clean
+
+clean:
+	del $(GEN_SRC) y.output *.tex *.obj *.pdf *.log *.aux *.o *.ilk *.pdb
+	
+clean-docs:
+	if exist $(DOC_DIR)\*.* del /Q $(DOC_DIR)\*.*
+
+clean-all: clean clean-docs
+	del /Q $(APP)
